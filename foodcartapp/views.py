@@ -1,4 +1,5 @@
 import json
+import phonenumbers
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
@@ -63,10 +64,34 @@ def register_order(request):
     try:
         customer_data = request.data
 
+        if 'products' not in customer_data:
+            return Response({'error': 'Key "products" is missing in the request data'}, status=400)
+
         products = customer_data['products']
 
-        if not isinstance(products, list):
+        for item in products:
+            product_id = item.get('product')
+
+            try:
+                product = Product.objects.get(pk=product_id)
+            except Product.DoesNotExist:
+                return Response({'error': f'Product with id {product_id} does not exist'}, status=400)
+
+        if not isinstance(products, list) :
             return Response({'error': 'Products key not presented or not list'},
+                            status=400)
+
+        required_fields = ['products', 'firstname', 'lastname', 'phonenumber', 'address']
+
+        for field in required_fields:
+            if field not in customer_data or not customer_data[field]:
+                return Response({'error': f'{field} is required and cannot be empty'},
+                                status=400)
+
+        parsed_number = phonenumbers.parse(customer_data['phonenumber'], "RU")
+        if not phonenumbers.is_valid_number(parsed_number) \
+            and not phonenumbers.region_code_for_number(parsed_number) == "RU":
+            return Response({'error': 'Phonenumbers is not valid'},
                             status=400)
         order = Order(
             firstname=customer_data.get('firstname'),
