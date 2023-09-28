@@ -1,10 +1,10 @@
-
+import json
 from django.http import JsonResponse
 from django.templatetags.static import static
-
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from .models import Product, Order, OrderItem
-import json
+
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -58,9 +58,10 @@ def product_list_api(request):
     })
 
 
+@api_view(['POST'])
 def register_order(request):
     try:
-        customer_data = json.loads(request.body.decode('utf-8'))
+        customer_data = request.data
 
 
         order = Order(
@@ -84,7 +85,6 @@ def register_order(request):
             )
             order_item.save()
 
-        return JsonResponse({'message': 'Data successfully processed'})
+        return Response({'message': 'Data successfully processed'})
     except json.JSONDecodeError as e:
-        print("JSON Decode Error:", str(e))
-        return JsonResponse({'error': 'Invalid JSON data', 'details': str(e)})
+        return Response({'error': 'Invalid JSON data', 'details': str(e)})
