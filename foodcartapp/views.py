@@ -63,7 +63,11 @@ def register_order(request):
     try:
         customer_data = request.data
 
+        products = customer_data['products']
 
+        if not isinstance(products, list):
+            return Response({'error': 'Products key not presented or not list'},
+                            status=400)
         order = Order(
             firstname=customer_data.get('firstname'),
             lastname=customer_data.get('lastname'),
