@@ -1,9 +1,10 @@
+
 from django.http import JsonResponse
 from django.templatetags.static import static
 
 
-from .models import Product
-
+from .models import Product, Order, OrderItem
+import json
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -58,5 +59,32 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # TODO это лишь заглушка
-    return JsonResponse({})
+    try:
+        customer_data = json.loads(request.body.decode('utf-8'))
+
+
+        order = Order(
+            firstname=customer_data.get('firstname'),
+            lastname=customer_data.get('lastname'),
+            phonenumber=customer_data.get('phonenumber'),
+            address=customer_data.get('address')
+        )
+        order.save()
+        for product_data in customer_data['products']:
+            product_id = product_data['product']
+            quantity = product_data['quantity']
+
+            product = Product.objects.get(pk=product_id)
+
+            order_item = OrderItem(
+                order=order,
+                product_name=product.name,
+                quantity=quantity,
+                price=product.price
+            )
+            order_item.save()
+
+        return JsonResponse({'message': 'Data successfully processed'})
+    except json.JSONDecodeError as e:
+        print("JSON Decode Error:", str(e))
+        return JsonResponse({'error': 'Invalid JSON data', 'details': str(e)})
