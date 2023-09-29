@@ -150,3 +150,7 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.order} "
+
+    def total_cost(self):
+        return self.quantity * self.price
+
