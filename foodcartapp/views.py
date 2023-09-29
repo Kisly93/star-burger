@@ -15,10 +15,10 @@ class OrderItemSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderItemSerializer(many=True, allow_empty=False)
+    products = OrderItemSerializer(many=True, allow_empty=False, write_only=True)
     class Meta:
         model = Order
-        fields = ['firstname', 'lastname', 'address', 'phonenumber', 'products']
+        fields = ['id','firstname', 'lastname', 'address', 'phonenumber', 'products']
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -95,12 +95,12 @@ def register_order(request):
 
         order_item = OrderItem(
             order=order,
-            product_name=product.name,
+            product=product.name,
             quantity=quantity,
             price=product.price
             )
         order_item.save()
-
-    return Response({'message': 'Data successfully processed'})
+    serialized_order = OrderSerializer(order).data
+    return Response(serialized_order)
 
 
