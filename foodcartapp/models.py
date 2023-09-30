@@ -142,8 +142,9 @@ class Order(models.Model):
         (4, 'Выполнен'),
     )
     status = models.PositiveIntegerField(
-        verbose_name='статус', choices=STATUS_CHOICES, default=1
+        verbose_name='Cтатус', choices=STATUS_CHOICES, default=1, db_index=True
     )
+    comment = models.TextField(verbose_name='Комментарий', max_length=200, blank=True)
 
     class Meta:
         verbose_name = 'покупатель'
