@@ -32,7 +32,7 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'admin:foodcartapp_restaurant_change' restaurant.id %}">ред.</a>
+        <td><a href='{% url "admin:foodcartapp_restaurant_change" object_id=restaurant.id %}?next={{ request.path|urlencode }}'>Редактировать</a></td>
           </td>
         </tr>
       {% endfor %}

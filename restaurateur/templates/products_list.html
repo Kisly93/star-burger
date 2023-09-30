@@ -56,9 +56,7 @@
               {% endif %}
             </td>
           {% endfor %}
-          <td>
-            <a href="{% url 'admin:foodcartapp_product_change' product.id %}">ред.</a>
-          </td>
+          <td><a href='{% url "admin:foodcartapp_product_change" object_id=product.id %}?next={{ request.path|urlencode }}'>Редактировать</a></td>
         </tr>
       {% endfor %}
     </table>
