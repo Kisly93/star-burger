@@ -1,12 +1,11 @@
-import json
-import phonenumbers
+
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.serializers import ModelSerializer
 from .models import Product, Order, OrderItem
-
+from django.db import transaction
 
 class OrderItemSerializer(ModelSerializer):
     class Meta:
@@ -72,6 +71,7 @@ def product_list_api(request):
     })
 
 
+@transaction.atomic
 @api_view(['POST'])
 def register_order(request):
     serializer = OrderSerializer(data=request.data)
@@ -83,23 +83,13 @@ def register_order(request):
         address=serializer.validated_data.get('address')
         )
     order.save()
-    for product_data in serializer.validated_data['products']:
-        product_id = product_data['product']
-        quantity = product_data['quantity']
-
-        try:
-            product = Product.objects.get(pk=product_id)
-        except Product.DoesNotExist:
-            return Response({'error': f'Product with id {product_id} does not exist'},
-                            status=400)
-
-        order_item = OrderItem(
+    for product in serializer.validated_data['products']:
+        OrderItem.objects.create(
             order=order,
-            product=product.name,
-            quantity=quantity,
-            price=product.price
-            )
-        order_item.save()
+            product=product['product'],
+            quantity=product['quantity'],
+            price=product['product'].price
+        )
     serialized_order = OrderSerializer(order).data
     return Response(serialized_order)
 

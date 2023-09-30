@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.db.models import Sum, F
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -124,11 +125,16 @@ class RestaurantMenuItem(models.Model):
         return f"{self.restaurant.name} - {self.product.name}"
 
 
+class OrderQuerySet(models.QuerySet):
+    def total_cost(self):
+        return self.annotate(total_cost=Sum(F('order_items__price') * F('order_items__quantity')))
+
 class Order(models.Model):
     firstname = models.CharField(max_length=255, verbose_name='Имя', blank=False, null=False)
     lastname = models.CharField(max_length=255, verbose_name='Фамилия', blank=False, null=False)
     phonenumber = PhoneNumberField(verbose_name='Номер телефона', db_index=True)
     address = models.TextField(verbose_name='Адрес покупателя', blank=False, null=False)
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'покупатель'
@@ -139,10 +145,20 @@ class Order(models.Model):
 
 
 class OrderItem(models.Model):
-    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE, verbose_name='Покупатель')
-    product = models.CharField(max_length=255, verbose_name='Заказ')
+    order = models.ForeignKey(Order,
+        related_name='items', on_delete=models.CASCADE, verbose_name='Покупатель'
+                              )
+    product = models.ForeignKey(
+        Product, related_name='items', on_delete=models.CASCADE, verbose_name='товар'
+    )
     quantity = models.PositiveIntegerField(verbose_name='Количество')
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена')
+    price = models.DecimalField(
+        'цена',
+        max_digits=8,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
 
     class Meta:
         verbose_name = 'заказ'
@@ -151,6 +167,4 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.order} "
 
-    def total_cost(self):
-        return self.quantity * self.price
 

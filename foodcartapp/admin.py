@@ -14,6 +14,9 @@ class RestaurantMenuItemInline(admin.TabularInline):
     model = RestaurantMenuItem
     extra = 0
 
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
@@ -106,10 +109,8 @@ class ProductAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     pass
 
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
 
+@admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
 
-admin.site.register(Order, OrderAdmin)
