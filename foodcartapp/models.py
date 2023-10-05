@@ -87,7 +87,7 @@ class Product(models.Model):
     )
 
     objects = ProductQuerySet.as_manager()
-
+    restaurants = models.ManyToManyField(Restaurant, related_name='products', verbose_name='рестораны')
     class Meta:
         verbose_name = 'товар'
         verbose_name_plural = 'товары'
@@ -130,6 +130,18 @@ class OrderQuerySet(models.QuerySet):
     def total_cost(self):
         return self.annotate(total_cost=Sum(F('order_items__price') * F('order_items__quantity')))
 
+    def filter_restaurants_for_order(self, order_id):
+        order = self.get(pk=order_id)
+        chosen_restaurant = order.chosen_restaurant
+        if chosen_restaurant:
+            return Restaurant.objects.filter(pk=chosen_restaurant.pk).distinct()
+        else:
+            products = order.items.all().values_list('product_id', flat=True)
+            restaurants = Restaurant.objects.filter(menu_items__product_id__in=products).distinct()
+            for product_id in products:
+                restaurants = restaurants.filter(menu_items__product_id=product_id)
+            return restaurants.distinct()
+
 class Order(models.Model):
     firstname = models.CharField(max_length=255, verbose_name='Имя', blank=False, null=False)
     lastname = models.CharField(max_length=255, verbose_name='Фамилия', blank=False, null=False)
@@ -158,6 +170,8 @@ class Order(models.Model):
     called_at = models.DateTimeField(verbose_name='Время звонка менеджера', null=True, blank=True, db_index=True)
     delivered_at = models.DateTimeField(verbose_name='Время доставки', null=True, blank=True, db_index=True)
 
+    chosen_restaurant = models.ForeignKey(Restaurant, verbose_name='Ресторан', null=True, blank=True,
+                                          on_delete=models.SET_NULL)
     class Meta:
         verbose_name = 'покупатель'
         verbose_name_plural = 'покупатели'
