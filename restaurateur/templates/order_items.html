@@ -35,25 +35,32 @@
         <td>{{ item.address }}</td>
         <td>{{ item.comment }}</td>
         <td>
-          <details>
-            <summary>Информация о ресторанах:</summary>
-            {% if item.chosen_restaurant %}
-              Готовит<br>
-              Ресторан {{ item.chosen_restaurant.name }}<br>
-              Адрес: {{ item.chosen_restaurant.address }}<br>
-              Телефон: {{ item.chosen_restaurant.contact_phone }}<br>
-            {% else %}
-              Могут Приготовить
-              {% for restaurant in item.restaurants %}
-                Ресторан {{ restaurant.name }}<br>
-                Адрес: {{ restaurant.address }}<br>
-                Телефон: {{ restaurant.contact_phone }}<br>
-                <br>
-              {% empty %}
-                Нет подходящих ресторанов
-              {% endfor %}
-            {% endif %}
-          </details>
+            <details>
+                <summary>Информация о ресторанах:</summary>
+                {% if item.chosen_restaurant %}
+                    Готовит<br>
+                    Ресторан {{ item.chosen_restaurant.name }}<br>
+                    Адрес: {{ item.chosen_restaurant.address }}<br>
+                    Телефон: {{ item.chosen_restaurant.contact_phone }}<br>
+                {% else %}
+                    {% if item.restaurants %}
+                        Могут Приготовить<br>
+                        {% for restaurant in item.restaurants %}
+                            Ресторан {{ restaurant.name }}<br>
+                            Адрес: {{ restaurant.address }}<br>
+                            Телефон: {{ restaurant.contact_phone }}<br>
+                            {% if restaurant.order_distance %}
+                                Расстояние от доставки: {{ restaurant.order_distance }} км<br>
+                            {% endif %}
+                            <br>
+                        {% empty %}
+                            Нет подходящих ресторанов
+                        {% endfor %}
+                    {% else %}
+                        Нет подходящих ресторанов
+                    {% endif %}
+                {% endif %}
+            </details>
         </td>
         <td><a href='{% url "admin:foodcartapp_order_change" object_id=item.id %}?next={{ request.path|urlencode }}'>Редактировать</a></td>
       </tr>

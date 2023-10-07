@@ -1,3 +1,4 @@
+import requests
 from django import forms
 from django.db.models import F, Sum
 from django.shortcuts import redirect, render
@@ -8,9 +9,20 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
+from django.conf import settings
+from geopy.distance import geodesic
 
+from area.models import Place
 from foodcartapp.models import Product, Restaurant, Order
 
+from geopy import distance
+from environs import Env
+
+
+env = Env()
+env.read_env()
+
+yandex_geocoder_api_key =env.str('YANDEX_GEOCODER_API_KEY')
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -64,6 +76,8 @@ def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
 
 
+
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_products(request):
     restaurants = list(Restaurant.objects.order_by('name'))
@@ -91,12 +105,48 @@ def view_restaurants(request):
     })
 
 
+def fetch_coordinates(address):
+    place = Place.objects.filter(address=address).first()
+    if place and place.lat and place.lon:
+        return float(place.lon), float(place.lat)
+    else:
+        apikey = settings.YANDEX_GEOCODER_API_KEY
+        base_url = "https://geocode-maps.yandex.ru/1.x"
+        response = requests.get(base_url, params={
+            "geocode": address,
+            "apikey": apikey,
+            "format": "json",
+        })
+        response.raise_for_status()
+        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+        if found_places:
+            most_relevant = found_places[0]
+            lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+
+            Place.objects.create(address=address, lat=lat, lon=lon)
+
+            return float(lon), float(lat)
+        else:
+            return None
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.annotate(total_cost=Sum(F('items__price') * F('items__quantity')))
 
     for order in orders:
-        order.restaurants = Order.objects.filter_restaurants_for_order(order.id)
+        restaurants = Order.objects.filter_restaurants_for_order(order.id)
+        order_coords = fetch_coordinates(order.address)
+
+        for restaurant in restaurants:
+            restaurant_coords = fetch_coordinates(restaurant.address)
+            if restaurant_coords and order_coords:
+                order_distance = geodesic(restaurant_coords, order_coords).kilometers
+                restaurant.order_distance = round(order_distance, 2)
+            else:
+                restaurant.order_distance = None
+
+        order.restaurants = sorted(restaurants, key=lambda x: x.order_distance)
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders,
