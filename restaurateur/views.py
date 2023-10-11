@@ -11,18 +11,11 @@ from django.contrib.auth import views as auth_views
 
 from django.conf import settings
 from geopy.distance import geodesic
+from geopy.exc import GeocoderTimedOut
 
 from area.models import Place
 from foodcartapp.models import Product, Restaurant, Order
 
-from geopy import distance
-from environs import Env
-
-
-env = Env()
-env.read_env()
-
-yandex_geocoder_api_key =env.str('YANDEX_GEOCODER_API_KEY')
 
 class Login(forms.Form):
     username = forms.CharField(
@@ -74,8 +67,6 @@ class LogoutView(auth_views.LogoutView):
 
 def is_manager(user):
     return user.is_staff  # FIXME replace with specific permission
-
-
 
 
 @user_passes_test(is_manager, login_url='restaurateur:login')
@@ -130,6 +121,7 @@ def fetch_coordinates(address):
         else:
             return None
 
+
 @user_passes_test(is_manager, login_url='restaurateur:login')
 def view_orders(request):
     orders = Order.objects.annotate(total_cost=Sum(F('items__price') * F('items__quantity')))
@@ -140,14 +132,19 @@ def view_orders(request):
 
         for restaurant in restaurants:
             restaurant_coords = fetch_coordinates(restaurant.address)
-            if restaurant_coords and order_coords:
-                order_distance = geodesic(restaurant_coords, order_coords).kilometers
-                restaurant.order_distance = round(order_distance, 2)
-            else:
+            try:
+                if restaurant_coords and order_coords:
+                    order_distance = geodesic(restaurant_coords, order_coords).kilometers
+                    restaurant.order_distance = round(order_distance, 2)
+                else:
+                    restaurant.order_distance = None
+            except GeocoderTimedOut:
                 restaurant.order_distance = None
 
-        order.restaurants = sorted(restaurants, key=lambda x: x.order_distance)
+        order.restaurants = sorted(restaurants, key=lambda x: x.order_distance if x.order_distance is not None else float('inf'))
 
     return render(request, template_name='order_items.html', context={
         'order_items': orders,
     })
+
+    return HttpResponse()

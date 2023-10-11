@@ -146,7 +146,7 @@ class Order(models.Model):
     firstname = models.CharField(max_length=255, verbose_name='Имя')
     lastname = models.CharField(max_length=255, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(verbose_name='Номер телефона', db_index=True)
-    address = models.TextField(verbose_name='Адрес покупателя')
+    address = models.CharField(max_length=255, verbose_name='Адрес покупателя')
     objects = OrderQuerySet.as_manager()
     STATUS_CHOICES = (
         (1, 'Новый'),
@@ -187,20 +187,18 @@ class OrderItem(models.Model):
     product = models.ForeignKey(
         Product, related_name='items', on_delete=models.CASCADE, verbose_name='товар'
     )
-    quantity = models.PositiveIntegerField(verbose_name='Количество')
+    quantity = models.PositiveIntegerField(
+        verbose_name='Количество',
+        validators=[MinValueValidator(1)]
+    )
     price = models.DecimalField(
         'цена',
         max_digits=8,
         decimal_places=2,
-        default=0,
         validators=[MinValueValidator(0)]
     )
 
     class Meta:
         verbose_name = 'заказ'
         verbose_name_plural = 'заказы'
-
-    def __str__(self):
-        return f"{self.order} "
-
 
