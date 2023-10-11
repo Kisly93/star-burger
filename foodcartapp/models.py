@@ -143,10 +143,10 @@ class OrderQuerySet(models.QuerySet):
             return restaurants.distinct()
 
 class Order(models.Model):
-    firstname = models.CharField(max_length=255, verbose_name='Имя', blank=False, null=False)
-    lastname = models.CharField(max_length=255, verbose_name='Фамилия', blank=False, null=False)
+    firstname = models.CharField(max_length=255, verbose_name='Имя')
+    lastname = models.CharField(max_length=255, verbose_name='Фамилия')
     phonenumber = PhoneNumberField(verbose_name='Номер телефона', db_index=True)
-    address = models.TextField(verbose_name='Адрес покупателя', blank=False, null=False)
+    address = models.TextField(verbose_name='Адрес покупателя')
     objects = OrderQuerySet.as_manager()
     STATUS_CHOICES = (
         (1, 'Новый'),
