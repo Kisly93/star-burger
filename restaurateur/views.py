@@ -13,7 +13,7 @@ from django.conf import settings
 from geopy.distance import geodesic
 from geopy.exc import GeocoderTimedOut
 
-from area.models import Place
+from places.models import Place
 from foodcartapp.models import Product, Restaurant, Order
 
 
