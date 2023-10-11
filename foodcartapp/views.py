@@ -1,23 +1,11 @@
-
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
 from .models import Product, Order, OrderItem
 from django.db import transaction
+from .serializers import OrderSerializer
 
-class OrderItemSerializer(ModelSerializer):
-    class Meta:
-        model = OrderItem
-        fields = ['product', 'quantity']
-
-
-class OrderSerializer(ModelSerializer):
-    products = OrderItemSerializer(many=True, allow_empty=False, write_only=True)
-    class Meta:
-        model = Order
-        fields = ['id','firstname', 'lastname', 'address', 'phonenumber', 'products']
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -81,7 +69,7 @@ def register_order(request):
         lastname=serializer.validated_data.get('lastname'),
         phonenumber=serializer.validated_data.get('phonenumber'),
         address=serializer.validated_data.get('address')
-        )
+    )
     order.save()
     for product in serializer.validated_data['products']:
         OrderItem.objects.create(
@@ -92,5 +80,3 @@ def register_order(request):
         )
     serialized_order = OrderSerializer(order).data
     return Response(serialized_order)
-
-
