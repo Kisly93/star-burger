@@ -128,7 +128,10 @@ def view_orders(request):
 
     for order in orders:
         restaurants = Order.objects.filter_restaurants_for_order(order.id)
-        order_coords = fetch_coordinates(order.address)
+        try:
+            order_coords = fetch_coordinates(order.address)
+        except (GeocoderTimedOut, ValueError):
+            order_coords = None
 
         for restaurant in restaurants:
             restaurant_coords = fetch_coordinates(restaurant.address)
