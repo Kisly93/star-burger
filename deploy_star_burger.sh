@@ -21,12 +21,11 @@ echo "Пересбор статики Django..."
 cd /opt/star-burger/star-burger/ && python3 ./manage.py collectstatic --noinput
 
 echo "Накат миграций..."
-python3 ./manage.py makemigrations
-python3 ./manage.py migrate
+python3 ./manage.py migrate --noinput
 
 echo "Перезапуск сервисов Systemd..."
-systemctl daemon-reload
 systemctl restart starburger
+systemctl reload nginx.service
 
 commit=`git rev-parse HEAD`
 
