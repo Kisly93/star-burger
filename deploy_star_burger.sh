@@ -11,20 +11,20 @@ git pull
 echo "Установка Python зависимостей..."
 pip install -r requirements.txt
 
-echo "Установка Node.js зависимостей..."
-npm ci --dev
-
-echo "Пересбор JS-кода..."
-./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
-
 echo "Пересбор статики Django..."
 cd /opt/star-burger/star-burger/ && python3 ./manage.py collectstatic --noinput
 
 echo "Накат миграций..."
 python3 ./manage.py migrate --noinput
 
+echo "Установка Node.js зависимостей..."
+npm ci --dev
+
+echo "Пересбор JS-кода..."
+./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+
 echo "Перезапуск сервисов Systemd..."
-systemctl restart starburger
+systemctl restart starburger.service
 systemctl reload nginx.service
 
 commit=`git rev-parse HEAD`
