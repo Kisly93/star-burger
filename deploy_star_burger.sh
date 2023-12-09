@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-
+source /opt/star-burger/star-burger/.env
 echo "Активация виртуального окружения..."
 source /opt/star-burger/star-burger/venv/bin/activate
 
