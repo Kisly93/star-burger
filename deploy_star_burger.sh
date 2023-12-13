@@ -1,9 +1,16 @@
 #!/bin/bash
 
 set -e
-source /opt/star-burger/star-burger/.env
+
+PROJECT_DIR=/opt/star-burger/star-burger/
+
+
+cd $PROJECT_DIR
+
+source .env
+
 echo "Активация виртуального окружения..."
-source /opt/star-burger/star-burger/venv/bin/activate
+source venv/bin/activate
 
 echo "Обновление кода из репозитория..."
 git pull
@@ -12,10 +19,10 @@ echo "Установка Python зависимостей..."
 pip install -r requirements.txt
 
 echo "Пересбор статики Django..."
-cd /opt/star-burger/star-burger/ && python3 ./manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 echo "Накат миграций..."
-python3 ./manage.py migrate --noinput
+python3 manage.py migrate --noinput
 
 echo "Установка Node.js зависимостей..."
 npm ci --dev
@@ -42,6 +49,7 @@ curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
   "comment": "deploy",
   "status": "succeeded"
 }'
+
 echo "Деактивация виртуального окружения..."
 deactivate
 
