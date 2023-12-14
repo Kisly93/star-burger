@@ -34,7 +34,7 @@ echo "Перезапуск сервисов Systemd..."
 systemctl restart starburger.service
 systemctl reload nginx.service
 
-commit=`git rev-parse HEAD`
+commit=`git rev-parse master`
 
 echo "Отправка уведомления в Rollbar..."
 curl -H "X-Rollbar-Access-Token: $ROLLBAR_ACCESS_TOKEN" \
